@@ -50,7 +50,6 @@ def loadAudioClassifications(fileSet):
     res = []
     for file in fileSet:
         if not exists(file['trackA'][:-4]+".txt"):
-            print("ran")
             trackA, trackB = determineSilences(file)
             writeClassification(file['trackA'][:-4]+".txt", trackA)
             writeClassification(file['trackB'][:-4] + ".txt", trackB)
