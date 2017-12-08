@@ -13,4 +13,5 @@ splitFiles = join("data", "splitAudio")
 
 if __name__ == "__main__":
     dataSets = prepData(audioFiles, splitFiles)
+    print("Setting up nn")
     train(dataSets[0]['trackA'], dataSets[0]['trackB'],[dataSets[0]["aClassification"], dataSets[0]["bClassification"]])

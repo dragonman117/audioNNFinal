@@ -9,8 +9,8 @@ trainIter = 1
 
 def train(trackA, trackB, segs):
     # Prep
-    left = tf.placeholder(tf.float32, [44100,None], name="left")
-    right = tf.placeholder(tf.float32, [44100,None], name="right")
+    left = tf.placeholder(tf.float32, [None, 44100, 1], name="left")
+    right = tf.placeholder(tf.float32, [None, 44100, 1], name="right")
     with tf.name_scope("similarity"):
         label = tf.placeholder(tf.int32, [None, 1], name="label")
         label = tf.to_float(label)
@@ -33,7 +33,10 @@ def train(trackA, trackB, segs):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
 
+        merged = tf.summary.merge_all()
+        writer = tf.summary.FileWriter('train.log', sess.graph)
+
         for i in range(trainIter):
             bLeft, bRight, bSim = gen.getNextBatch("a")
-            _, l, summary_str = sess.run([train_step, loss], feed_dict={left:bLeft, right:bRight, label:bSim})
+            _, l, summary_str = sess.run([train_step, loss, merged], feed_dict={left:bLeft, right:bRight, label:bSim})
             print(summary_str)
