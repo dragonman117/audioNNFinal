@@ -2,6 +2,9 @@ from os.path import join
 from prepAudio import prepData
 from readwav import importWav
 import tensorflow as tf
+from generator import Generator
+from train import train
+import numpy as np
 
 
 #Global Strings
@@ -10,8 +13,4 @@ splitFiles = join("data", "splitAudio")
 
 if __name__ == "__main__":
     dataSets = prepData(audioFiles, splitFiles)
-    # print(dataSets[0])
-    # segTime = dataSets[0]["aClassification"][0]
-    # print(segTime)
-    # audio = importWav(dataSets[0]["trackA"], segTime)
-    # print(audio.shape)
+    train(dataSets[0]['trackA'], dataSets[0]['trackB'],[dataSets[0]["aClassification"], dataSets[0]["bClassification"]])
