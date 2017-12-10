@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 from skimage.measure import block_reduce
+import pickle
 
 SAMPLE_RATE = 44100
 
@@ -29,3 +30,4 @@ def getSpectrum(track, outHz, nOutFreqs, display=False):
 if __name__ == '__main__':
     wav = importWav('data/splitAudio/HS_D01/trackA.wav')
     spec = getSpectrum(wav, 10, 32, display=True)
+
