@@ -1,6 +1,13 @@
 from os import listdir, makedirs
 from os.path import join, exists
 from pydub import AudioSegment, silence, effects
+from fft import getSpectrum
+import numpy as np
+import pickle
+
+spectrumHz = 16 #How many frames per second of spectral data to extract
+frequencies = 32 #How many difference frequencies to retain in the spectral data
+
 
 def audioFileGenerator(rootDir):
     files = sorted([f for f in listdir(rootDir)])
@@ -17,6 +24,15 @@ def splitTracks(file, stepDir):
         seperated = full.split_to_mono()
         effects.normalize(seperated[0]).export(trackA, format="wav")
         effects.normalize(seperated[1]).export(trackB, format="wav")
+        wavA = np.array(seperated[0].get_array_of_samples())
+        wavB = np.array(seperated[1].get_array_of_samples())
+        specA = getSpectrum(wavA, spectrumHz, frequencies)
+        specB = getSpectrum(wavB, spectrumHz, frequencies)
+        with open(join(dir, "specA.pck"), 'wb') as f:
+            pickle.dump(specA, f)
+        with open(join(dir, "specB.pck"), 'wb') as f:
+            pickle.dump(specB, f)
+
     return {"original": file, "trackA": trackA, "trackB":trackB}
 
 def determineSilences(file):
