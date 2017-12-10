@@ -21,4 +21,7 @@ def importWav(filename, segment=None):
     sound = AudioSegment.from_file(filename)
     if segment != None:
         sound = sound[segment[0]:segment[1]]
-    return np.array(sound.get_array_of_samples())
+    return sound
+
+def soundToNumpy(soundObj):
+    np.array(soundObj.get_array_of_samples())
