@@ -33,7 +33,7 @@ def splitTracks(file, stepDir):
         with open(join(dir, "specB.pck"), 'wb') as f:
             pickle.dump(specB, f)
 
-    return {"original": file, "trackA": trackA, "trackB":trackB}
+    return {"original": file, "trackA": trackA, "trackB":trackB, "specA": join(dir, "specA.pck"), "specB": join(dir, "specB.pck")}
 
 def determineSilences(file):
     trackA = AudioSegment.from_file(file["trackA"])

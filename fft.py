@@ -28,6 +28,10 @@ def getSpectrum(track, outHz, nOutFreqs, display=False):
 
 
 if __name__ == '__main__':
-    wav = importWav('data/splitAudio/HS_D01/trackA.wav')
-    spec = getSpectrum(wav, 10, 32, display=True)
+    with open("data/splitAudio/HS_D02/specA.pck", 'rb') as f:
+        data = pickle.load(f)
+        plt.pcolormesh(data)
+
+    #wav = importWav('data/splitAudio/HS_D01/trackA.wav')
+    #spec = getSpectrum(wav, 10, 32, display=True)
 

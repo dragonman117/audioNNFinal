@@ -1,13 +1,18 @@
 import tensorflow as tf
 import numpy as np
-from singleNetwork import singleNet, constrastiveLoss
+from singleNetwork import singleNet, contrastiveLoss
 from generator import Generator
 
 #Consts
 trainIter = 1
 
 
-def train(trackA, trackB, segs):
+def train(dataset):
+    #Unpack inputs
+    trackA = dataset["specA"]
+    trackB = dataset["specB"]
+    segs = [dataset["aClassification"], dataset["bClassification"]]
+
     # Prep
     left = tf.placeholder(tf.float32, [None, 44100, 1], name="left")
     right = tf.placeholder(tf.float32, [None, 44100, 1], name="right")
@@ -17,18 +22,19 @@ def train(trackA, trackB, segs):
 
     margin = 0.2
 
+    gen = Generator(trackA, trackB, segs)
+
+    #Two different networks?
     left_output = singleNet(left, reuse=False)
     right_output = singleNet(right, reuse=True)
 
-    loss = constrastiveLoss(left_output, right_output, label, margin)
+    loss = contrastiveLoss(left_output, right_output, label, margin)
 
     global_step = tf.Variable(0, trainable=False)
 
     train_step = tf.train.MomentumOptimizer(0.01, 0.99, use_nesterov=True).minimize(loss, global_step=global_step)
 
     saver = tf.train.Saver()
-
-    gen = Generator(trackA, trackB, segs)
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())

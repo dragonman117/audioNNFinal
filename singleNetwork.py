@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 # https://github.com/ardiya/siamesenetwork-tensorflow
-#  https://github.com/ywpkwon/siamese_tf_mnist/blob/master/inference.py -other
+# https://github.com/ywpkwon/siamese_tf_mnist/blob/master/inference.py -other
 
 def singleNet(input, reuse=False):
     print("Shape: ",input.shape)
@@ -41,7 +41,7 @@ def singleNet(input, reuse=False):
     return net
 
 
-def constrastiveLoss(model1, model2, y, margin):
+def contrastiveLoss(model1, model2, y, margin):
     with tf.name_scope("contrastive-loss"):
         d = tf.sqrt(tf.reduce_sum(tf.pow(model1-model2), 1, keep_dims=True))
         tmp = y * tf.square(d)
