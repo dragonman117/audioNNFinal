@@ -35,52 +35,63 @@ class Generator:
 
         self.buildTrainSet()
 
-    def makeChunks(self, iterable, chunkSize):
-        for i in range(0, len(iterable), chunkSize):
-            yield(iterable[i : i + chunkSize])
+    def makeChunks(self, iterable):
+        size =  int(self.sampleRate * self.chunkLength)
+        for i in range(0, len(iterable), size):
+            yield(iterable[i : i + size])
+
 
     def sampleFromMs(self, ms):
         sec = ms / 1000
         return int(np.floor(sec * self.sampleRate + .5))
 
     def buildTrainSet(self):
-        #Paste the clean tracks together for training
-        combinedA = np.zeros((1, self.freqs))
-        combinedB = np.zeros((1, self.freqs))
+        ##Find the positive training points first
 
-        for segtimes in self.asegTrain: # these are start time/ end time in ms.
-            combinedA = np.append(combinedA, self.trackA[self.sampleFromMs(segtimes[0]):self.sampleFromMs(segtimes[1])], axis=0)
-        combinedA = combinedA[1:-1]#remove zeros on first entry
+        #Initialize with zeros to allow np.append. These will be removed later.
+        aPosSpecComb = np.zeros((1, self.freqs))
+        bPosSpecComb = np.zeros((1, self.freqs))
 
-        for segtimes in self.bsegTrain: # these are start time/ end time in ms.
-            combinedB = np.append(combinedB, self.trackB[self.sampleFromMs(segtimes[0]):self.sampleFromMs(segtimes[1])], axis=0)
-        combinedB = combinedB[1:-1]#remove zeros on first entry
+        for segtimes in self.asegTrain: # segtimes are tuples of (start_time, end_time) in ms.
+            aPosSpecComb = np.append(aPosSpecComb, self.trackA[self.sampleFromMs(segtimes[0]):self.sampleFromMs(segtimes[1])], axis=0)
+        aPosSpecComb = aPosSpecComb[1:-1]#remove zeros on first entry
+
+        for segtimes in self.bsegTrain: # segtimes are tuples of (start_time, end_time) in ms.
+            bPosSpecComb = np.append(bPosSpecComb, self.trackB[self.sampleFromMs(segtimes[0]):self.sampleFromMs(segtimes[1])], axis=0)
+        bPosSpecComb = bPosSpecComb[1:-1]#remove zeros on first entry
 
         #After this, you have a list of n x 32 timechunks to push through the network.
         #At a sample rate of 32 and a chunk length of .5, chunks are 8 x 32
-        self.combSetsA = list(self.makeChunks(combinedA, int(self.sampleRate * self.chunkLength)))
-        self.combSetsB = list(self.makeChunks(combinedB, int(self.sampleRate * self.chunkLength)))
+        self.combSetsA = list(self.makeChunks(aPosSpecComb))
+        self.combSetsB = list(self.makeChunks(bPosSpecComb))
 
+        ##Find Negative segments and store them in self.aNeg/self.bNeg
+        # Initialize with zeros to allow np.append. These will be removed later.
+        aNegSegs = self.findNegSegments(self.aseg)
+        bNegSegs = self.findNegSegments(self.bseg)
 
+        aNegSpecComb = np.zeros((1, self.freqs))
+        bNegSpecComb = np.zeros((1, self.freqs))
 
-        negSeg = self.findNegSegments(self.aseg)
-        aChunk = AudioSegment.empty()
-        for seg in negSeg:
-            aChunk += self.trackA[seg[0]:seg[1]]
+        for segtimes in aNegSegs: # segtimes are tuples of (start_time, end_time) in ms.
+            aNegSpecComb = np.append(aNegSpecComb, self.trackA[self.sampleFromMs(segtimes[0]):self.sampleFromMs(segtimes[1])], axis=0)
 
-        self.aNeg = make_chunks(aChunk, 1000)
-        negSeg = self.findNegSegments(self.bseg)
-        bChunk = AudioSegment.empty()
-        for seg in negSeg:
-            bChunk += self.trackB[seg[0]:seg[1]]
-        self.bNeg = make_chunks(bChunk, 1000)
+        for segtimes in bNegSegs: # segtimes are tuples of (start_time, end_time) in ms.
+            bNegSpecComb = np.append(bNegSpecComb, self.trackB[self.sampleFromMs(segtimes[0]):self.sampleFromMs(segtimes[1])], axis=0)
 
-        #Asymmetry between combSetsA and combSetsB. Is this on purpose?
+        self.aNeg = list(self.makeChunks(aNegSpecComb[1:-1]))#remove zeros on first entry, chunkify, cast to list
+        self.bNeg = list(self.makeChunks(bNegSpecComb[1:-1]))#remove zeros on first entry, chunkify, cast to list
+
+        # After this, you have a list of n x 32 timechunks to push through the network.
+        # At a sample rate of 32 and a chunk length of .5, chunks are 8 x 32
+
+        #zip everything together in the proper format.
         self.aTrainFin = [[x,x,1] for x in self.combSetsA] + [[x,y,0] for x,y in zip(self.combSetsA, self.aNeg)]
         self.bTrainFin = [[x,x,1] for x in self.combSetsB] + [[x,y,0] for x,y in zip(self.combSetsB, self.bNeg)]
 
     def findNegSegments(self, knownSeg):
         start = 0
+        #Hijack the shape of self.aseg. Data will not be used asymetrically.
         segs = self.aseg
         if (knownSeg[0][0] == 0):
             start = knownSeg[0][1] + 1
