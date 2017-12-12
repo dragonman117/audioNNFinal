@@ -39,3 +39,11 @@ def contrastiveLoss(model1, model2, y, margin):
         tmp = y * tf.square(d)
         tmp2 = (1-y) * tf.square(tf.maximum((margin-d), 0))
         return tf.reduce_mean(tmp + tmp2) /2
+
+def contrastiveLossTest(model1, model2, margin, threashold):
+    with tf.name_scope("contrastive-loss-test"):
+        d = tf.sqrt(tf.reduce_sum(tf.pow(model1-model2,2), 1, keep_dims=True))
+        tmp = tf.square(d)
+        tmp2 = tf.square(tf.maximum((margin-d), 0))
+        res = (tf.reduce_mean(tmp + tmp2) /2)
+        return 0 if res > threashold else 1
