@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import datetime
 
 lossCounter = 0
-EPOCHS_PER_PLOT = 5
+EPOCHS_PER_PLOT = 20
 lossCounter = 0
 losses = []
 
@@ -21,6 +21,8 @@ trainIter = 100
 
 
 def train(dataset):
+    global lossCounter
+    global losses
     #reset graph
     tf.reset_default_graph()
 
@@ -50,6 +52,8 @@ def train(dataset):
     #Maybe a lower momentum?
     train_step = tf.train.MomentumOptimizer(0.01, 0.99, use_nesterov=True).minimize(loss, global_step=global_step)
 
+    lossCounter = 0
+    losses = []
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
 
@@ -57,34 +61,31 @@ def train(dataset):
         for i in range(trainIter):
             bLeft, bRight, bSim = gen.getNextBatch("a")
             _, lossVal = sess.run([train_step, loss], feed_dict={left:bLeft, right:bRight, label:bSim})
-            recordLoss(lossVal)
+            recordLoss(lossVal, i, 'Aseg')
             # writer.add_summary(summary_str, i)
-            print("\r#%d - Loss" % i, l) ## I think this string should be what we encode
+            print("\r#%d - Loss" % i, lossVal)
 
-        # Test A seg (track 1)
-        # Todo: write test code
-
+    lossCounter = 0
+    losses =[]
     print("Break Between parts A and B")
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         # Train B seg (track2)
         for i in range(trainIter):
             bLeft, bRight, bSim = gen.getNextBatch("b")
-            _, l = sess.run([train_step, loss], feed_dict={left:bLeft, right:bRight, label:bSim})
+            _, lossVal = sess.run([train_step, loss], feed_dict={left:bLeft, right:bRight, label:bSim})
+            recordLoss(lossVal, i, 'Bseg')
             # writer.add_summary(summary_str, i)
-            print("\r#%d - Loss" % i, l) ## I think this string should be what we encode
+            print("\r#%d - Loss" % i, lossVal)
 
         # TestB seg (track2)
         # Todo: write test code
             print("\r#%d - Loss" % i, lossVal) ## I think this string should be what I
 
-def recordLoss(loss):
-    global lossCounter
-    lossCounter += 1
+def recordLoss(loss, iter, segment):
     losses.append(loss)
-    if lossCounter % EPOCHS_PER_PLOT == 0:
-        plt.figure()
+    if (iter+1) % EPOCHS_PER_PLOT == 0:
         plt.plot(losses)
         plt.xlabel('Epoch')
         plt.ylabel('Contrastive Loss')
-        plt.savefig(os.path.join(GRAPH_DIR, str(lossCounter) + 'EPOCHLOSS'))
+        plt.savefig(os.path.join(GRAPH_DIR, str(iter+1) + segment + 'EPOCHLOSS'))

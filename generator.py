@@ -1,19 +1,11 @@
-from readwav import importWav, soundToNumpy
-from pydub import AudioSegment
-from pydub.utils import make_chunks
 import random
 import numpy as np
 from importSpec import importSpec
-import matplotlib.pyplot as plt
-
-#TODO: Remake make chunks
 
 TRAINING_BATCH_SIZE = 5
 SAMPLE_RATE = 16
 FREQS = 32
 CHUNK_LENGTH = 0.5 #in seconds
-
-#TODO: NegSeg section
 
 class Generator:
 
@@ -61,7 +53,7 @@ class Generator:
         bPosSpecComb = bPosSpecComb[1:-1]#remove zeros on first entry
 
         #After this, you have a list of n x 32 timechunks to push through the network.
-        #At a sample rate of 16 and a chunk length of .5, chunks are 8 x 32
+        #At a sample rate of 32 and a chunk length of .5, chunks are 8 x 32
         self.combSetsA = list(self.makeChunks(aPosSpecComb))
         self.combSetsB = list(self.makeChunks(bPosSpecComb))
 
@@ -83,9 +75,8 @@ class Generator:
         self.bNeg = list(self.makeChunks(bNegSpecComb[1:-1]))#remove zeros on first entry, chunkify, cast to list
 
         # After this, you have a list of n x 32 timechunks to push through the network.
-        # At a sample rate of 16 and a chunk length of .5, chunks are 8 x 32
+        # At a sample rate of 32 and a chunk length of .5, chunks are 8 x 32
 
-        ##Should both of these be here?
         #zip everything together in the proper format.
         self.aTrainFin = [[x,x,1] for x in self.combSetsA] + [[x,y,0] for x,y in zip(self.combSetsA, self.aNeg)]
         self.bTrainFin = [[x,x,1] for x in self.combSetsB] + [[x,y,0] for x,y in zip(self.combSetsB, self.bNeg)]
