@@ -2,12 +2,25 @@ import tensorflow as tf
 import numpy as np
 from singleNetwork import singleNet, contrastiveLoss
 from generator import Generator
+import os
+import datetime
+import matplotlib.pyplot as plt
 
 #Consts
 trainIter = 1000
 
+lossCounter = 0
+EPOCHS_PER_PLOT = 20
+losses = []
+
+GRAPH_DIR = ('./graphs/' + datetime.datetime.now().isoformat(timespec='seconds')).replace(':','-')
+if os.path.exists(GRAPH_DIR):
+    print('Graph directory for this run already exists. Old graphs will be overwritten.')
+os.makedirs(GRAPH_DIR)
+
 
 def train(dataset):
+    global lossCounter, losses
     #reset graph
     tf.reset_default_graph()
 
@@ -39,26 +52,38 @@ def train(dataset):
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-
+        losses = []
+        lossCounter = 0
         # Train A seg (track 1)
         for i in range(trainIter):
             bLeft, bRight, bSim = gen.getNextBatch("a")
             _, l = sess.run([train_step, loss], feed_dict={left:bLeft, right:bRight, label:bSim})
             # writer.add_summary(summary_str, i)
             print("\r#%d - Loss" % i, l) ## I think this string should be what we encode
-
+            recordLoss(l, i, 'A')
         # Test A seg (track 1)
         # Todo: write test code
 
     print("Break Between parts A and B")
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
+        losses = []
+        lossCounter = 0
         # Train B seg (track2)
         for i in range(trainIter):
             bLeft, bRight, bSim = gen.getNextBatch("b")
             _, l = sess.run([train_step, loss], feed_dict={left:bLeft, right:bRight, label:bSim})
             # writer.add_summary(summary_str, i)
             print("\r#%d - Loss" % i, l) ## I think this string should be what we encode
-
+            recordLoss(l, i, 'B')
         # TestB seg (track2)
         # Todo: write test code
+
+
+def recordLoss(loss, iter, segment):
+    losses.append(loss)
+    if (iter+1) % EPOCHS_PER_PLOT == 0:
+        plt.plot(losses)
+        plt.xlabel('Epoch')
+        plt.ylabel('Contrastive Loss')
+        plt.savefig(os.path.join(GRAPH_DIR, segment + str(iter+1) +  'EPOCHLOSS'))
