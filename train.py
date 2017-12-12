@@ -8,6 +8,9 @@ trainIter = 100
 
 
 def train(dataset):
+    #reset graph
+    tf.reset_default_graph()
+
     #Unpack inputs
     trackA = dataset["specA"]
     trackB = dataset["specB"]
@@ -37,8 +40,25 @@ def train(dataset):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
 
+        # Train A seg (track 1)
         for i in range(trainIter):
             bLeft, bRight, bSim = gen.getNextBatch("a")
             _, l = sess.run([train_step, loss], feed_dict={left:bLeft, right:bRight, label:bSim})
             # writer.add_summary(summary_str, i)
-            print("\r#%d - Loss" % i, l) ## I think this string should be what I
+            print("\r#%d - Loss" % i, l) ## I think this string should be what we encode
+
+        # Test A seg (track 1)
+        # Todo: write test code
+
+    print("Break Between parts A and B")
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        # Train B seg (track2)
+        for i in range(trainIter):
+            bLeft, bRight, bSim = gen.getNextBatch("b")
+            _, l = sess.run([train_step, loss], feed_dict={left:bLeft, right:bRight, label:bSim})
+            # writer.add_summary(summary_str, i)
+            print("\r#%d - Loss" % i, l) ## I think this string should be what we encode
+
+        # TestB seg (track2)
+        # Todo: write test code
