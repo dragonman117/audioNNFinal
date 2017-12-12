@@ -1,7 +1,13 @@
 import tensorflow as tf
+import datetime
+import os
+import matplotlib.pyplot as plt
 
 # https://github.com/ardiya/siamesenetwork-tensorflow
 # https://github.com/ywpkwon/siamese_tf_mnist/blob/master/inference.py -other
+
+
+
 
 def singleNet(input, reuse=False):
     with tf.name_scope("model"):
@@ -38,4 +44,5 @@ def contrastiveLoss(model1, model2, y, margin):
         d = tf.sqrt(tf.reduce_sum(tf.pow(model1-model2,2), 1, keep_dims=True))
         tmp = y * tf.square(d)
         tmp2 = (1-y) * tf.square(tf.maximum((margin-d), 0))
-        return tf.reduce_mean(tmp + tmp2) /2
+        return tf.reduce_mean(tmp + tmp2) / 2
+
