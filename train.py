@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-from singleNetwork import singleNet, contrastiveLoss
+from singleNetwork import singleNet, contrastiveLoss, contrastiveLossTest
 from generator import Generator
 import os
 import datetime
@@ -37,6 +37,7 @@ def train(dataset):
         label = tf.to_float(label)
 
     margin = 0.2
+    threashold = 0.005
 
     gen = Generator(trackA, trackB, segs)
 
@@ -50,6 +51,8 @@ def train(dataset):
 
     train_step = tf.train.MomentumOptimizer(0.004, 0.099, use_nesterov=True).minimize(loss, global_step=global_step)
 
+    train_res = contrastiveLossTest(left_output, right_output, margin, threashold )
+
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         losses = []
@@ -62,7 +65,10 @@ def train(dataset):
             print("\r#%d - Loss" % i, l) ## I think this string should be what we encode
             recordLoss(l, i, 'A')
         # Test A seg (track 1)
-        # Todo: write test code
+        tLeft, tRightArray = gen.getTrain("a")
+        for tRight in tRightArray:
+            l = sess.run([train_res], feed_dict={left:tLeft, right:tRight})
+            print("Predicted: ", l)
 
     print("Break Between parts A and B")
     with tf.Session() as sess:
@@ -77,8 +83,11 @@ def train(dataset):
             print("\r#%d - Loss" % i, l) ## I think this string should be what we encode
             recordLoss(l, i, 'B')
         # TestB seg (track2)
-        # Todo: write test code
 
+        tLeft, tRightArray = gen.getTrain("b")
+        for tRight in tRightArray:
+            l = sess.run([train_res], feed_dict={left: tLeft, right: tRight})
+            print("Predicted: ", l)
 
 def recordLoss(loss, iter, segment):
     losses.append(loss)
@@ -87,3 +96,4 @@ def recordLoss(loss, iter, segment):
         plt.xlabel('Epoch')
         plt.ylabel('Contrastive Loss')
         plt.savefig(os.path.join(GRAPH_DIR, segment + str(iter+1) +  'EPOCHLOSS'))
+
