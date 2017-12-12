@@ -13,5 +13,5 @@ splitFiles = join("data", "splitAudio")
 
 if __name__ == "__main__":
     dataSets = prepData(audioFiles, splitFiles)
-    for set in dataSets:
+    for set in dataSets[:1]:
         train(set)

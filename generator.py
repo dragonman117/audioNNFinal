@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 #TODO: Remake make chunks
 
-TRAINING_BATCH_SIZE = 5
+TRAINING_BATCH_SIZE = 1
 SAMPLE_RATE = 16
 FREQS = 32
 CHUNK_LENGTH = 0.5 #in seconds
@@ -86,8 +86,10 @@ class Generator:
         # At a sample rate of 32 and a chunk length of .5, chunks are 8 x 32
 
         #zip everything together in the proper format.
-        self.aTrainFin = [[x,x,1] for x in self.combSetsA] + [[x,y,0] for x,y in zip(self.combSetsA, self.aNeg)]
-        self.bTrainFin = [[x,x,1] for x in self.combSetsB] + [[x,y,0] for x,y in zip(self.combSetsB, self.bNeg)]
+        tmpA = self.combSetsA[-1:] + self.combSetsA[:-1]
+        tmpB = self.combSetsB[-1:] + self.combSetsB[:-1]
+        self.aTrainFin = [[x,y,1] for x,y in zip(self.combSetsA, tmpA)] + [[x,y,0] for x,y in zip(self.combSetsA, self.aNeg)]
+        self.bTrainFin = [[x,y,1] for x,y in zip(self.combSetsB, tmpB)] + [[x,y,0] for x,y in zip(self.combSetsB, self.bNeg)]
         self.aTrainFin = [x for x in self.aTrainFin if (np.array(x[0]).shape == (8, 32)) and ((np.array(x[1]).shape == (8, 32)))]
         self.bTrainFin = [x for x in self.bTrainFin if (np.array(x[0]).shape == (8, 32)) and ((np.array(x[1]).shape == (8, 32)))]
 
