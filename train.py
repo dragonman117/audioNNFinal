@@ -4,7 +4,7 @@ from singleNetwork import singleNet, contrastiveLoss
 from generator import Generator
 
 #Consts
-trainIter = 4
+trainIter = 100
 
 
 def train(dataset):
@@ -33,8 +33,6 @@ def train(dataset):
     global_step = tf.Variable(0, trainable=False)
 
     train_step = tf.train.MomentumOptimizer(0.01, 0.99, use_nesterov=True).minimize(loss, global_step=global_step)
-
-    saver = tf.train.Saver()
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
