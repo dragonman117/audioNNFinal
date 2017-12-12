@@ -4,7 +4,7 @@ from singleNetwork import singleNet, contrastiveLoss
 from generator import Generator
 
 #Consts
-trainIter = 1
+trainIter = 4
 
 
 def train(dataset):
@@ -14,8 +14,8 @@ def train(dataset):
     segs = [dataset["aClassification"], dataset["bClassification"]]
 
     # Prep
-    left = tf.placeholder(tf.float32, [None, 44100, 1], name="left")
-    right = tf.placeholder(tf.float32, [None, 44100, 1], name="right")
+    left = tf.placeholder(tf.float32, [None, 8, 32, 1], name="left")
+    right = tf.placeholder(tf.float32, [None, 8, 32, 1], name="right")
     with tf.name_scope("similarity"):
         label = tf.placeholder(tf.int32, [None, 1], name="label")
         label = tf.to_float(label)
@@ -39,10 +39,8 @@ def train(dataset):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
 
-        merged = tf.summary.merge_all()
-        writer = tf.summary.FileWriter('train.log', sess.graph)
-
         for i in range(trainIter):
             bLeft, bRight, bSim = gen.getNextBatch("a")
-            _, l, summary_str = sess.run([train_step, loss, merged], feed_dict={left:bLeft, right:bRight, label:bSim})
-            print(summary_str)
+            _, l = sess.run([train_step, loss], feed_dict={left:bLeft, right:bRight, label:bSim})
+            # writer.add_summary(summary_str, i)
+            print("\r#%d - Loss" % i, l) ## I think this string should be what I

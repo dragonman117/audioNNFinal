@@ -106,10 +106,10 @@ class Generator:
         if track == "a":
             set = random.sample(range(0, len(self.aTrainFin)), self.batchSize)
             raw = [self.aTrainFin[x] for x in set]
-            lhs = [np.array(x[0].get_array_of_samples()).reshape(44100,1) for x in raw]
-            rhs = [np.array(x[1].get_array_of_samples()).reshape(44100,1) for x in raw]
+            lhs = [np.array(x[0]).reshape((8,32,1)) for x in raw]
+            rhs = [np.array(x[1]).reshape((8,32,1)) for x in raw]
             sim = np.array([[x[2]] for x in raw])
-            return lhs, rhs, sim
+            return np.array(lhs), np.array(rhs), sim
         else:
             set = random.sample(range(0, len(self.bTrainFin)), self.batchSize)
             raw = [self.aTrainFin[x] for x in set]
