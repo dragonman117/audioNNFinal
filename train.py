@@ -67,9 +67,9 @@ def train(dataset):
         # Test A seg (track 1)
         tLeft, tRightArray = gen.getTrain("a")
         for tRight in tRightArray:
-            l = sess.run([train_res], feed_dict={left:tLeft, right:tRight})
+            l = sess.run([train_res], feed_dict={left:tLeft, right:tRight[0]})
             l = 0 if l > threashold else 1
-            print("Predicted: ", l)
+            print("Predicted", tRight[1], ": ", l)
 
     print("Break Between parts A and B")
     with tf.Session() as sess:
@@ -86,9 +86,9 @@ def train(dataset):
         # TestB seg (track2)
         tLeft, tRightArray = gen.getTrain("b")
         for tRight in tRightArray:
-            l = sess.run([train_res], feed_dict={left: tLeft, right: tRight})
+            l = sess.run([train_res], feed_dict={left: tLeft, right: tRight[0]})
             l = 0 if l > threashold else 1
-            print("Predicted: ", l)
+            print("Predicted ", tRight[1],": ", l)
 
 def recordLoss(loss, iter, segment):
     losses.append(loss)
