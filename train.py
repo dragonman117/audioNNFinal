@@ -52,6 +52,8 @@ def train(dataset):
 
     train_res = contrastiveLossTest(left_output, right_output, margin )
 
+    train = gen.PredictSet
+
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         losses = []
@@ -64,11 +66,13 @@ def train(dataset):
             print("\r#%d - Loss" % i, l) ## I think this string should be what we encode
             recordLoss(l, i, 'A')
         # Test A seg (track 1)
-        tLeft, tRightArray = gen.getTrain("a")
-        for tRight in tRightArray:
-            l = sess.run([train_res], feed_dict={left:tLeft, right:tRight[0]})
-            l = 0 if l > threashold else 1
-            print("Predicted", tRight[1], ": ", l)
+        testDat = train[0]
+        for seg in testDat:
+            lTest = np.array([seg[0].reshape((8,32,1))])
+            rTest = np.array([seg[1].reshape((8,32,1))])
+            l = sess.run([train_res], feed_dict={left:lTest, right:rTest})
+            # l = 0 if l > threashold else 1
+            print("Predicted", seg[2], ": ", l)
 
     print("Break Between parts A and B")
     with tf.Session() as sess:
@@ -83,11 +87,13 @@ def train(dataset):
             print("\r#%d - Loss" % i, l) ## I think this string should be what we encode
             recordLoss(l, i, 'B')
         # TestB seg (track2)
-        tLeft, tRightArray = gen.getTrain("b")
-        for tRight in tRightArray:
-            l = sess.run([train_res], feed_dict={left: tLeft, right: tRight[0]})
-            l = 0 if l > threashold else 1
-            print("Predicted ", tRight[1],": ", l)
+        testDat = train[1]
+        for seg in testDat:
+            lTest = np.array([seg[0].reshape((8, 32, 1))])
+            rTest = np.array([seg[1].reshape((8, 32, 1))])
+            l = sess.run([train_res], feed_dict={left: lTest, right: rTest})
+            # l = 0 if l > threashold else 1
+            print("Predicted", seg[2], ": ", l)
 
 def recordLoss(loss, iter, segment):
     losses.append(loss)
