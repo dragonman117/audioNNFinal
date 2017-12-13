@@ -1,6 +1,7 @@
 import random
 import numpy as np
 from importSpec import importSpec
+import random
 
 TRAINING_BATCH_SIZE = 1
 SAMPLE_RATE = 16
@@ -54,19 +55,27 @@ class Generator:
     def chunkifySegs(self, segs):
         chunks = []
         size = int(self.sampleRate * self.chunkLength)
+
+        mschunks = []
+        mssize = int(self.chunkLength * 1000)
+
         for seg in segs:
-            seg = [self.sampleFromMs(seg[0]), self.sampleFromMs(seg[1])]
-            start = seg[0]
+            specSeg = [self.sampleFromMs(seg[0]), self.sampleFromMs(seg[1])]
+            start = specSeg[0]
+            msstart = seg[0]
             end = start + size
-            while end < seg[1]:
+            msend = msstart + mssize
+            while end < specSeg[1]:
                 chunks.append([start, end])
+                mschunks.append([msstart, msend])
                 start = end
+                msstart = msend
                 end = start + size
+                msend = msstart + mssize
             if start != end:
-                chunks.append([start, seg[1]])
-
-        return chunks
-
+                chunks.append([start, specSeg[1]])
+                mschunks.append([msstart, seg[1]])
+        return [chunks, mschunks]
 
 
     def sampleFromMs(self, ms):
@@ -151,16 +160,19 @@ class Generator:
             return np.array(lhs), np.array(rhs), sim
 
     def buildPredictSet(self):
-        self.asegPredictChunks = self.chunkifySegs(self.asegPredict)
-        self.bsegPredictChunks = self.chunkifySegs(self.bsegPredict)
+        self.asegPredictChunks, msaChunks = self.chunkifySegs(self.asegPredict)
+        self.bsegPredictChunks, msbChunks = self.chunkifySegs(self.bsegPredict)
 
         aPredictSpecList = [self.pad(self.trackA[start : end]) for start, end in self.asegPredictChunks]
         bPredictSpecList = [self.pad(self.trackB[start : end]) for start, end in self.bsegPredictChunks]
 
-        aComparisons = [np.random.choice(self.combSetsA) for _ in aPredictSpecList]
-        bComparisons = [np.random.choice(self.combSetsB) for _ in bPredictSpecList]
+        atmp = self.combSetsA[0:-1]
+        btmp = self.combSetsB[0:-1]
 
-        aTrackPredictData = list(zip(aComparisons, aPredictSpecList, self.asegPredictChunks))
-        bTrackPredictData = list(zip(bComparisons, bPredictSpecList, self.bsegPredictChunks))
+        aComparisons = [random.choice(atmp) for _ in aPredictSpecList]
+        bComparisons = [random.choice(btmp) for _ in bPredictSpecList]
+
+        aTrackPredictData = list(zip(aComparisons, aPredictSpecList, msaChunks))
+        bTrackPredictData = list(zip(bComparisons, bPredictSpecList, msbChunks))
         self.PredictSet = [aTrackPredictData, bTrackPredictData]
 
