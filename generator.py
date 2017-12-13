@@ -62,7 +62,8 @@ class Generator:
                 chunks.append([start, end])
                 start = end
                 end = start + size
-            chunks.append([start, seg[1]])
+            if start != end:
+                chunks.append([start, seg[1]])
 
         return chunks
 

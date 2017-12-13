@@ -7,7 +7,7 @@ import datetime
 import matplotlib.pyplot as plt
 
 #Consts
-trainIter = 1000
+trainIter = 100
 
 lossCounter = 0
 EPOCHS_PER_PLOT = 20
