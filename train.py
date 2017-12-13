@@ -7,7 +7,7 @@ import datetime
 import matplotlib.pyplot as plt
 
 #Consts
-trainIter = 100
+trainIter = 10000
 
 lossCounter = 0
 EPOCHS_PER_PLOT = 20
@@ -75,7 +75,9 @@ def train(dataset):
             l = 0 if l > threashold else 1
             resSets.append([seg[2], l])
             print("Predicted", seg[2], ": ", l)
-        predictedClean = filterCleanTimes(resSets)
+        predictedClean = gen.asegTrain + filterCleanTimes(resSets)
+        writeResToFile(dataset["trackA"][:-4] + "Res.csv", predictedClean)
+
 
     print("Break Between parts A and B")
     with tf.Session() as sess:
@@ -99,6 +101,8 @@ def train(dataset):
             l = 0 if l > threashold else 1
             resSets.append([seg[2], l])
             print("Predicted", seg[2], ": ", l)
+        predictedClean = gen.asegTrain + filterCleanTimes(resSets)
+        writeResToFile(dataset["trackB"][:-4] + "Res.csv", predictedClean)
 
 def recordLoss(loss, iter, segment):
     losses.append(loss)
@@ -119,11 +123,15 @@ def filterCleanTimes(resSet):
             if current[0][1] == resSet[(i+1)][0][0] and resSet[(i+1)][1] == 1:
                 current[0][1] = resSet[(i+1)][0][0]
             else:
-                res.append([current[0], "clean"])
+                res.append([current[0][0], current[0][1], "clean"])
                 current = None
         else:
             if current[1] == 1:
-                res.append([current[0], "clean"])
+                res.append([current[0][0], current[0][1], "clean"])
             current = None
     return res
 
+def writeResToFile(outputFile, cleanSegs):
+    with open(outputFile, "w") as file:
+        for seg in cleanSegs:
+            file.write(str(seg)[1:-1].replace("'","") + "\n")
