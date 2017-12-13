@@ -1,19 +1,11 @@
-from readwav import importWav, soundToNumpy
-from pydub import AudioSegment
-from pydub.utils import make_chunks
 import random
 import numpy as np
 from importSpec import importSpec
-import matplotlib.pyplot as plt
-
-#TODO: Remake make chunks
 
 TRAINING_BATCH_SIZE = 1
 SAMPLE_RATE = 16
 FREQS = 32
 CHUNK_LENGTH = 0.5 #in seconds
-
-#TODO: NegSeg section
 
 class Generator:
 
@@ -35,10 +27,45 @@ class Generator:
 
         self.buildTrainSet()
 
+        self.asegPredict = [x for x in segs[0] if x[2] == "dirty"]
+        self.bsegPredict = [x for x in segs[0] if x[2] == "dirty"]
+
+        self.buildPredictSet()
+
+    #Splits the spectral data into chunks based on sample rate and desired length in time.
     def makeChunks(self, iterable):
         size =  int(self.sampleRate * self.chunkLength)
         for i in range(0, len(iterable), size):
-            yield(iterable[i : i + size])
+            chunk = iterable[i : i + size]
+            yield chunk
+
+    def pad(self, chunk):
+        size = int(self.sampleRate * self.chunkLength)
+        if len(chunk) != size:
+            padder = np.mean(chunk, axis=0).reshape((1, -1))
+            prepend = int(np.floor((size - len(chunk)) / 2))
+            append = int(np.ceil((size - len(chunk)) / 2))
+            for _ in range(prepend):
+                chunk = np.append(padder, chunk, axis=0)
+            for _ in range(append):
+                chunk = np.append(chunk, padder, axis=0)
+        return chunk
+
+    def chunkifySegs(self, segs):
+        chunks = []
+        size = int(self.sampleRate * self.chunkLength)
+        for seg in segs:
+            seg = [self.sampleFromMs(seg[0]), self.sampleFromMs(seg[1])]
+            start = seg[0]
+            end = start + size
+            while end < seg[1]:
+                chunks.append([start, end])
+                start = end
+                end = start + size
+            chunks.append([start, seg[1]])
+
+        return chunks
+
 
 
     def sampleFromMs(self, ms):
@@ -121,3 +148,18 @@ class Generator:
             rhs = [np.array(x[1]).reshape((8, 32, 1)) for x in raw]
             sim = np.array([[x[2]] for x in raw])
             return np.array(lhs), np.array(rhs), sim
+
+    def buildPredictSet(self):
+        self.asegPredictChunks = self.chunkifySegs(self.asegPredict)
+        self.bsegPredictChunks = self.chunkifySegs(self.bsegPredict)
+
+        aPredictSpecList = [self.pad(self.trackA[start : end]) for start, end in self.asegPredictChunks]
+        bPredictSpecList = [self.pad(self.trackB[start : end]) for start, end in self.bsegPredictChunks]
+
+        aComparisons = [np.random.choice(self.combSetsA) for _ in aPredictSpecList]
+        bComparisons = [np.random.choice(self.combSetsB) for _ in bPredictSpecList]
+
+        aTrackPredictData = list(zip(aComparisons, aPredictSpecList, self.asegPredictChunks))
+        bTrackPredictData = list(zip(bComparisons, bPredictSpecList, self.bsegPredictChunks))
+        self.PredictSet = [aTrackPredictData, bTrackPredictData]
+
