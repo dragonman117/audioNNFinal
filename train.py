@@ -41,7 +41,6 @@ def train(dataset):
 
     gen = Generator(trackA, trackB, segs)
 
-    #Two different networks?
     left_output = singleNet(left, reuse=False)
     right_output = singleNet(right, reuse=True)
 
