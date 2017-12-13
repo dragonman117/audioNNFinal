@@ -75,6 +75,7 @@ def train(dataset):
             l = 0 if l > threashold else 1
             resSets.append([seg[2], l])
             print("Predicted", seg[2], ": ", l)
+        predictedClean = filterCleanTimes(resSets)
 
     print("Break Between parts A and B")
     with tf.Session() as sess:
@@ -90,11 +91,13 @@ def train(dataset):
             recordLoss(l, i, 'B')
         # TestB seg (track2)
         testDat = train[1]
+        resSets = []
         for seg in testDat:
             lTest = np.array([seg[0].reshape((8, 32, 1))])
             rTest = np.array([seg[1].reshape((8, 32, 1))])
             l = sess.run([train_res], feed_dict={left: lTest, right: rTest})[0]
             l = 0 if l > threashold else 1
+            resSets.append([seg[2], l])
             print("Predicted", seg[2], ": ", l)
 
 def recordLoss(loss, iter, segment):
@@ -106,5 +109,21 @@ def recordLoss(loss, iter, segment):
         plt.savefig(os.path.join(GRAPH_DIR, segment + str(iter+1) +  'EPOCHLOSS'))
 
 
-
+def filterCleanTimes(resSet):
+    res = []
+    current = None
+    for i in range(len(resSet)):
+        if not current:
+            current = resSet[i]
+        if (i+1) < len(resSet) and current[1] == 1:
+            if current[0][1] == resSet[(i+1)][0][0] and resSet[(i+1)][1] == 1:
+                current[0][1] = resSet[(i+1)][0][0]
+            else:
+                res.append([current[0], "clean"])
+                current = None
+        else:
+            if current[1] == 1:
+                res.append([current[0], "clean"])
+            current = None
+    return res
 
